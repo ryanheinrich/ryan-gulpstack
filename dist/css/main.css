@@ -1,0 +1,19 @@
+/*
+	Base template for developing with SCSS / SASS
+	Author: Ryan Heinrich
+	Version: 0.0.1
+*/
+
+/* BASE - Base styles, variables, mixins, etc. */
+
+h1 {
+  margin-top: 0;
+  background-color: red;
+  background-color: red;
+  background-image: -webkit-linear-gradient(bottom, #8fdce5, #3dc3d1);
+  background-image: linear-gradient(to top,#8fdce5, #3dc3d1);
+}
+
+/* MODULES - Individual site components */
+
+/* LAYOUTS - Page layout styles */
