@@ -9,6 +9,7 @@
   "author": "Ryan",
   "license": "ISC",
   "devDependencies": {
+    "autoprefixer": "^6.3.1",
     "browser-sync": "2.6.5",
     "gulp": "^3.9.0",
     "gulp-autoprefixer": "2.1.0",
@@ -19,6 +20,7 @@
     "gulp-imagemin": "2.2.1",
     "gulp-jshint": "1.10.0",
     "gulp-plumber": "1.0.0",
+    "gulp-postcss": "^6.1.0",
     "gulp-rename": "1.2.2",
     "gulp-sass": "^2.2.0",
     "gulp-uglify": "1.2.0",

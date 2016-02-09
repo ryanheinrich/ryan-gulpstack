@@ -2,7 +2,8 @@ var gulp = require('gulp'),
     plumber = require('gulp-plumber'),
     rename = require('gulp-rename');
 var uncss = require('gulp-uncss');
-var autoprefixer = require('gulp-autoprefixer');
+var autoprefixer = require('autoprefixer');
+var postcss = require('gulp-postcss');
 var concat = require('gulp-concat');
 var jshint = require('gulp-jshint');
 var uglify = require('gulp-uglify');
@@ -59,7 +60,7 @@ gulp.task('styles', function(done) {
         .pipe(sass({
       includePaths: require('node-bourbon').includePaths
     }))
-        .pipe(autoprefixer('last 2 versions'))
+        .pipe(postcss([ autoprefixer({ browsers: ['last 2 versions'] }) ]))
         .pipe(uncss({
             html: ['src/*.html', 'src/pages/**/*.html']
         }))
