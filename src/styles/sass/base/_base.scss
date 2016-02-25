@@ -1,6 +1,6 @@
 h1{
   margin-top: 0;
-  background-color: red;
+  color: red;
 
   // Testing bourbon plugin - WORKS!
   @include linear-gradient(to top, #8fdce5, #3dc3d1, $fallback: red);

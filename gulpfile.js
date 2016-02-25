@@ -14,6 +14,7 @@ var clean = require('gulp-clean');
 var browserSync = require('browser-sync');
 var sequence = require('run-sequence');
 var htmlmin = require('gulp-htmlmin');
+var inject = require('gulp-inject');
 
 var PATHS = {
     sass: ['./src/styles/sass/**/*.scss'],
@@ -31,24 +32,32 @@ var PATHS = {
 // Delete the "dist" folder
 // This happens every time a build starts
 gulp.task('clean', function(done) {
+    
 	return gulp.src('dist', {read: false})
 		.pipe(clean({force: true}));
 });
 
 // Copy files out of the assets folder
-gulp.task('copy', function() {
-  return gulp.src(PATHS.assets)
+gulp.task('copy', function(done) {
+
+  gulp.src(PATHS.assets)
     .pipe(gulp.dest('dist/assets'));
+    
+  gulp.src('src/*.html')
+    .pipe(gulp.dest('dist'))
+  done();
+    
 });
 
 
-
-gulp.task('images', function() {
+// Optimize images
+gulp.task('images', function(done) {
     return gulp.src('src/images/**/*')
-        .pipe(imagemin({optimizationLevel: 3,progressive: true,interlaced: true}))
-        .pipe(gulp.dest('dist/img'));
+        .pipe(imagemin({optimizationLevel: 4,progressive: true,interlaced: true}))
+        .pipe(gulp.dest('dist/images'));
 });
 
+// Compile SASS files into main.css
 gulp.task('styles', function(done) {
     gulp.src(['src/styles/sass/**/*.scss'])
         .pipe(plumber({
@@ -62,7 +71,7 @@ gulp.task('styles', function(done) {
     }))
         .pipe(postcss([ autoprefixer({ browsers: ['last 2 versions'] }) ]))
         .pipe(uncss({
-            html: ['src/*.html', 'src/pages/**/*.html']
+            html: ['dist/*.html']
         }))
         .pipe(gulp.dest('dist/css/'))
 
@@ -78,8 +87,9 @@ gulp.task('styles', function(done) {
         done();
 });
 
-gulp.task('scripts', function() {
-    return gulp.src('src/scripts/**/*.js')
+// compile scripts, concatenate & minify them
+gulp.task('scripts', function(done) {
+    var custom = gulp.src('src/scripts/custom.js')
         .pipe(plumber({
             errorHandler: function(error) {
                 console.log(error.message);
@@ -87,7 +97,7 @@ gulp.task('scripts', function() {
             }
         }))
         .pipe(jshint())
-        .pipe(jshint.reporter('default'))
+        .pipe(jshint.reporter('jshint-stylish'))
         .pipe(concat('custom.js'))
         .pipe(gulp.dest('dist/js/'))
         .pipe(rename({
@@ -98,16 +108,21 @@ gulp.task('scripts', function() {
         .pipe(browserSync.reload({
             stream: true
         }))
+    done();
 });
 
+
+// Minifies html (removes white space & comments)
 gulp.task('html', function() {
-  return gulp.src('src/*.html')
+  return gulp.src('dist/*.html')
     .pipe(htmlmin({collapseWhitespace: true}))
     .pipe(gulp.dest('dist'))
 });
 
+// Our Build task for everything
 gulp.task('build', function(done){
-  sequence('clean', ['styles', 'images', 'copy', 'scripts'], 'html', done);
+  sequence('clean', 'copy', ['styles', 'scripts', 'images'],  'injection', 'html', 'browser-sync', done); 
+
 });
 
 gulp.task('browser-sync', function() {
@@ -118,33 +133,47 @@ gulp.task('browser-sync', function() {
     });
 });
 
-gulp.task('bs-reload', function() {
+gulp.task('reload', function() {
     browserSync.reload();
+
 });
 
-
-
+gulp.task('bs-reload', function(done) {
+    sequence('injection', 'reload', 'html', done);
+});
 
 /*
-  gulp.task('index')
-  Open up the index.html file
-  In the head tag, replace all of the script tags for your controllers and services with the inject:js comment below. Make sure to leaveLeave the app.js script tag.
-
-  <!-- inject:js -->
+    index injects any css or js files located in the distribution folder
+    <!-- inject:js -->
   <!-- endinject -->
   Replace the css tag for the style.css with the inject:css command below
 
   <!-- inject:css -->
   <!-- endinject -->
-
-  to inject
 */
+gulp.task('injection', function () {
+  var target = gulp.src('./src/index.html');
+  // It's not necessary to read the files (will speed up things), we're only after their paths: 
+  var sources = gulp.src(['./dist/js/*.js', './dist/css/*.css'], {read: false});
 
-gulp.task('default', ['build', 'browser-sync'], function() {
+  return target.pipe(inject(sources, {
+
+        // Do not add a root slash to the beginning of the path
+        addRootSlash: false,
+
+        // Remove the `public` from the path when doing the injection
+        ignorePath: 'dist'
+    }))
+ 
+    .pipe(gulp.dest('./dist'));
+
+});
+
+
+gulp.task('default', ['build'], function() {
     gulp.watch(PATHS.assets, ['copy']);
     gulp.watch(["src/styles/sass/**/*.scss"], ['styles']);
     gulp.watch(["src/scripts/**/*.js"], ['scripts']);
     gulp.watch(['src/images/**/*'], ['images']);
-    gulp.watch(['src/*.html'], ['html', 'bs-reload']);
-    // gulp.watch("*.html").on('change', browserSync.reload);
+    gulp.watch(['src/*.html'], ['bs-reload']);
 });
